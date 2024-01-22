@@ -9,53 +9,63 @@ class ParamEditor extends React.Component<Props, State> {
         };
     }
 
-    handleChange = (paramId: number, value: string) => {
-        const updatedParamValues = this.state.model.paramValues.map(prev =>
-            prev.paramId === paramId ? { ...prev, value: value } : prev
-        );
+    handleChange = (paramId: number, value: string, type: string) => {
+        if (type === 'string') {
+            const updatedParamValues = this.state.model.paramValues.map(prev =>
+                prev.paramId === paramId ? { ...prev, value: value } : prev
+            );
 
-        this.setState(prevState => ({
-            model: {
-                ...prevState.model,
-                paramValues: updatedParamValues,
-            },
-        }));
-    };
+            this.setState(prevState => ({
+                model: {
+                    ...prevState.model,
+                    paramValues: updatedParamValues,
+                },
+            }));
+        } else if (type === 'color') {
+            const updatedColors = this.state.model.colors.map(color =>
+                color.id === paramId ? { ...color, hexCode: value } : color
+            );
 
-    handleChangeColor = (colorId: number, hexCode: string) => {
-        const updatedColors = this.state.model.colors.map(color =>
-            color.id === colorId ? { ...color, hexCode: hexCode } : color
-        );
-
-        this.setState(prevState => ({
-            model: {
-                ...prevState.model,
-                colors: updatedColors,
-            },
-        }));
+            this.setState(prevState => ({
+                model: {
+                    ...prevState.model,
+                    colors: updatedColors,
+                },
+            }));
+        }
     };
 
     public getModel = (): Model => {
         return this.state.model;
     };
 
-    renderParamInput = (param: Param, paramValue: ParamValue) => {
+    getParamValue = (paramId: number) => {
+        return this.state.model.paramValues.find(prev => prev.paramId === paramId) || { paramId, value: '' };
+    };
+
+    getColorValue = (paramId: number) => {
+        return this.state.model.colors.find(color => color.id === paramId) || { id: paramId, hexCode: '#ffffff' };
+    };
+
+    renderParamInput = (param: Param) => {
+        const paramValue = this.getParamValue(param.id);
+
         switch (param.type) {
             case 'string':
                 return (
                     <input
                         type="text"
                         value={paramValue.value}
-                        onChange={(e) => this.handleChange(param.id, e.target.value)}
+                        onChange={(e) => this.handleChange(param.id, e.target.value, param.type)}
                     />
                 );
             case 'color':
-                const colorValue = this.state.model.colors.find(color => color.id === param.id);
+                const colorValue = this.getColorValue(param.id);
                 return (
                     <input
                         type="color"
-                        value={colorValue ? colorValue.hexCode : '#ffffff'}
-                        onChange={(e) => this.handleChangeColor(param.id, e.target.value)}
+                        value={colorValue.hexCode}
+                        onChange={(e) => this.handleChange(param.id, e.target.value, param.type)}
                     />
                 );
             default:
@@ -66,16 +76,13 @@ class ParamEditor extends React.Component<Props, State> {
     render() {
         return (
             <div className="param-editor">
-                {this.props.params.map(param => {
-                    const paramValue = this.state.model.paramValues.find(prev => prev.paramId === param.id) || { paramId: param.id, value: '' };
-                    return (
-                        <div key={param.id}>
-                            <label>{param.name}</label>
-                            {this.renderParamInput(param, paramValue)}
-                        </div>
-                    );
-                })}
-                <button onClick={() => console.log(this.getModel())}>Save Model</button>
+                {this.props.params.map(param => (
+                    <div key={param.id} className="param-input">
+                        <label>{param.name}</label>
+                        {this.renderParamInput(param)}
+                    </div>
+                ))}
+                <button onClick={() => console.log(this.getModel())}>Сохранить модель</button>
             </div>
         );
     }
